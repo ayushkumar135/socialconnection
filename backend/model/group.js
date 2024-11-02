@@ -1,1 +1,1 @@
-//group schema
+const mongoose = require("mongoose");

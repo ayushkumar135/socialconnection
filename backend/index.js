@@ -1,5 +1,4 @@
-//intial set up
-
+//require('dotenv').config();
 const express=require("express");
 const mongoose =require("mongoose")
 const cors=require("cors")
@@ -10,6 +9,7 @@ const PORT=3000;
 const socket=require("socket.io")
 
 const authenticate=require("./middlewares/authenticate.js")
+//import userSchema
 const User=require("./model/userSchema")
 const Post=require("./model/postModel")
 const Group=require("./model/group")
@@ -76,7 +76,7 @@ app.put('/updatepost',authenticate,upload.single("image"),async(req,res)=>{
     }
  })
 
-mongoose.connect("mongodb+srv://ayush1234567890:ILIKEMANGO@cluster0.gone4jf.mongodb.net/?retryWrites=true&w=majority",{
+mongoose.connect("mongodb+srv://ayushhkumar135:rHkuXSbPF9APVcei@cluster0.yiz44.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0",{
     useNewUrlParser:true,
     useUnifiedTopology:true,
 }).then(()=>{

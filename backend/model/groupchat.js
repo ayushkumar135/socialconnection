@@ -1,1 +1,1 @@
-//groupChat schema
+const mongoose = require("mongoose");
