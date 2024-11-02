@@ -98,7 +98,80 @@ router.get('/check',authenticate,(req,res)=>{
    }
 })
 //friend routes
+router.post('/cancelRequest', authenticate, async(req, res)=>{
+   const id=req.userID
+   try{
+      const friendUser=await User.findOne({_id: req.body.ide})
+      const user=await User.findOne({_id: id})
+      const usertoFriend = await User.findByIdAndUpdate(
+         user._id,
+         { $pull: { pendingRequest:friendUser._id} },
+         { new: true } 
+      )
+      const FriendtoUser = await User.findByIdAndUpdate(
+         friendUser._id,
+         { $pull: { pendingRequestSent:user._id} },
+         { new: true } 
+      )
+      res.status(200).json({message: "Done"})
+   }catch(err){
+      console.log(`${err}`)
+   }
+})
 
+router.post('/sendRequest', authenticate, async(req,res)=>{
+   const id=req.userID
+   try{
+      
+      const friendUser=await User.findOne({_id: req.body.ide})
+      const user=await User.findOne({_id: id})
+      const usertoFriend = await User.findByIdAndUpdate(
+         user._id,
+         { $push: { pendingRequestSent:friendUser._id} },
+         { new: true } 
+      )
+      const FriendtoUser = await User.findByIdAndUpdate(
+         friendUser._id,
+         { $push: { pendingRequest:user._id} },
+         { new: true } 
+      )
+      res.status(200).json({message: "Request Sent"})
+   }catch(err){
+      console.log("User not found")
+   }
+})
+router.post('/acceptRequest', authenticate, async(req,res)=>{
+   const id=req.userID
+   try{
+      console.log(req.body.ide)
+      console.log(req.params.id)
+      const friendUser=await User.findOne({_id: req.body.ide})
+      const user=await User.findOne({_id: id})
+      const usertoFriend = await User.findByIdAndUpdate(
+         user._id,
+         { $push: { friends:friendUser._id} },
+         { new: true } 
+      )
+      const FriendtoUser = await User.findByIdAndUpdate(
+         friendUser._id,
+         { $push: { friends:user._id} },
+         { new: true } 
+      )
+      const usertoFriendremove = await User.findByIdAndUpdate(
+         user._id,
+         { $pull: { pendingRequest:friendUser._id} },
+         { new: true } 
+      )
+      const FriendtoUserremove = await User.findByIdAndUpdate(
+         friendUser._id,
+         { $pull: { pendingRequestSent:user._id} },
+         { new: true } 
+      )
+      res.status(200).json({message: "Done"})
+   }catch(err){
+      console.log(`${err}`)
+   }
+})
 
 
 module.exports=router
