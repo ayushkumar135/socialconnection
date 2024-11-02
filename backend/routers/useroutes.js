@@ -172,6 +172,85 @@ router.post('/acceptRequest', authenticate, async(req,res)=>{
       console.log(`${err}`)
    }
 })
+router.post('/unfriend', authenticate, async(req, res)=>{
+   const id=req.userID
+   try{
+      const friendUser=await User.findOne({_id: req.body.ide})
+      const user=await User.findOne({_id: id})
+      const usertoFriend = await User.findByIdAndUpdate(
+         user._id,
+         { $pull: { friends:friendUser._id} },
+         { new: true } 
+      )
+      const FriendtoUser = await User.findByIdAndUpdate(
+         friendUser._id,
+         { $pull: { friends:user._id} },
+         { new: true } 
+      )
+      res.status(200).json({message: "Done"})
+   }catch(err){
+      console.log(`${err}`)
+   }
+})
+router.post('/highscore',authenticate,async(req,res)=>{
+   try{
+      const user=await User.findOne({_id:req.userID})
+      const id=req.userID
+      const currentScore=req.body.score
+      const highscore=user.highScore
+      console.log(currentScore)
+      const curr=parseInt(currentScore)
+      console.log(curr)
+      if(curr>highscore){
+         const tm= await User.findByIdAndUpdate(id,
+            {$set:{highScore:curr}},
+            {new:true});
+      }
+      res.status(200).json({message:"all ok"})
+   }catch(err){
+      console.log("${err}")
+   }
+})
+router.get('/leaderboard-backend',authenticate,async(req,res)=>{
+      const allUsers=await User.find({})
+      let sortedData=[...allUsers].sort((a,b)=>b.highScore-a.highScore)
+      res.status(200).json({msg:sortedData})
+})
+router.get('/getfriends', authenticate, async(req, res)=>{
+   const id=req.userID
+   console.log(id)
+   try{
+      const currUser=await User.findOne({_id:id})
+      const pendingRequest=currUser.pendingRequest
+      const currFriends=currUser.friends
+      const pendingRequestSent=currUser.pendingRequestSent
+      const allUsers=await User.find({_id: {$nin: [pendingRequest, currFriends,pendingRequestSent,currUser._id]}})
+      res.status(200).json({msg: allUsers})
+   }catch(err){
+      res.status(400).json({msg: "error"})
+   }
+})
+router.get('/myfriends',authenticate,async(req,res)=>{
+   const id=req.userID
+   try {
+      const currUser=await User.findOne({_id:id})
+      const currFriends=await currUser.populate('friends')
+      res.status(200).json({msg:currFriends.friends})
+         
+   } catch (error) {
+         res.status(400).json({msg:"Error"})
+   }
+})
+router.get('/mypendingrequest',authenticate,async(req,res)=>{
+   const id=req.userID
+   try {
+      const currUser=await User.findOne({_id:id})
+      const pendingRequest=await currUser.populate('pendingRequest')
+      res.status(200).json({msg:pendingRequest.pendingRequest})
+   } catch (error) {
+      res.status(400).json({msg:"error occured"})
+   }
+})
 
 
 module.exports=router
