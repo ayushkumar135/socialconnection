@@ -480,5 +480,102 @@ router.post('/getMembersToAdded', authenticate, async (req, res) => {
       res.status(500).json({ msg: "Internal Server Error" });
    }
 });
+router.get('/getMembersToAdded1', authenticate, async (req, res) => {
+   const id = req.userID;
+
+   try {
+      const currUser = await User.findOne({ _id: id });
+      if (!currUser) {
+         return res.status(404).json({ msg: "User not found" });
+      }
+
+      const currFriends = currUser.friends;
+      if (!currFriends || currFriends.length === 0) {
+         return res.status(404).json({ msg: "No friends found for the current user" });
+      }
+
+      const allUsers = await User.find({ _id: { $in: currFriends } });
+      if (!allUsers || allUsers.length === 0) {
+         return res.status(404).json({ msg: "No friends found" });
+      }
+
+      res.status(200).json({ msg: allUsers });
+   } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: "Internal Server Error" });
+   }
+});
+
+router.post('/getMembersToRemoved', authenticate, async (req, res) => {
+   const id = req.userID;
+   const groupid = req.body.groupId;
+
+   try {
+      const group = await Group.findOne({ _id: groupid });
+      const addedMembers = group.members;
+      const allUsers = await User.find({ _id: {  $in: addedMembers ,$nin: id} });
+
+      res.status(200).json({ msg: allUsers });
+   } catch (err) {
+      console.error(err);
+      res.status(500).json({ msg: "Internal Server Error" });
+   }
+});
+
+router.post('/getgroupchat', authenticate, async (req, res) => {
+   try {
+       const fromUser = req.userID;
+       const groupid = req.body.groupId; // Using query instead of body for groupId
+       const messages = await GroupChat.find({
+         groupid: groupid
+       }).sort({ createdAt: 1 }); 
+       
+       const projectedMessage = messages.map(msg => {
+         return {
+            fromUser: msg.fromUser.equals(fromUser),
+            message: msg.message,
+            name: msg.name
+         };
+       });
+       res.status(200).json({ msg: projectedMessage });
+   } catch (error) {
+       console.error(error);
+       res.status(500).json({ msg: 'Internal Server Error' });
+   }
+});
+
+router.get('/getgroups', authenticate, async (req, res) => {
+   try {
+       const fromUser = req.userID;
+       const projectedGroups = await Group.find({ members: { $in: fromUser } });
+       res.status(200).json({ msg: projectedGroups });
+   } catch (error) {
+       console.error(error);
+       res.status(500).json({ msg: 'Internal Server Error' });
+   }
+});
+const messagefromUser = {};
+
+router.post('/setdisappearing', authenticate, async (req, res) => {
+   try {
+       const fromUser = req.userID;
+       const friendId = req.body.ide;
+       const message = req.body.message;
+       if (!messagefromUser[friendId]) {
+         messagefromUser[friendId] = [];
+       }
+       messagefromUser[friendId].push({ from: fromUser, message: message });
+      setTimeout(() => {
+           if (messageStorage[friendId]) {
+               messageStorage[friendId] = messageStorage[friendId].filter(msgObj => msgObj.message !== message);
+           }
+       }, 5000);
+
+       res.status(200).json({ msg: 'Message set to disappear after 5 seconds' });
+   } catch (error) {
+       console.error(error);
+       res.status(500).json({ msg: 'Internal Server Error' });
+   }
+});
 
 module.exports=router
